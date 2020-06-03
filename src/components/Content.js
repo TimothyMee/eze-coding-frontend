@@ -8,16 +8,14 @@ const Navigation = () => {
         <div className="row">
 
             <div className="col-lg-3">
-
-                <h1 className="my-4">Shop Name</h1>
-                <div class="btn-group btn-group-lg col-md-12" role="group" aria-label="Basic example">
+                <div class="btn-group btn-group-lg col-md-12 my-4" role="group" aria-label="Basic example">
                     <button type="button" class="btn btn-secondary">Buy</button>
                     <button type="button" class="btn btn-secondary">Sell</button>
                 </div>
                 <div className="list-group">
-                    <a href="#" className="list-group-item">Category 1</a>
-                    <a href="#" className="list-group-item">Category 2</a>
-                    <a href="#" className="list-group-item">Category 3</a>
+                    <a href="#" className="list-group-item">Filter 1</a>
+                    <a href="#" className="list-group-item">Filter 2</a>
+                    <a href="#" className="list-group-item">Filter 3</a>
                 </div>
 
             </div>
