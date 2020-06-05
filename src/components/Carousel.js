@@ -20,7 +20,7 @@ const Carousel = (props) => {
         <div className="carousel-item active">
           <img
             className="d-block img-fluid"
-            src="http://placehold.it/900x350"
+            src="/carousel.jpg"
             alt="First slide"
           />
         </div>
