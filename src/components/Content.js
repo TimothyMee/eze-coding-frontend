@@ -1,109 +1,227 @@
-import React from 'react';
+import React, { useState, useEffect } from "react";
+import Item from "./Item";
+import Carousel from "./Carousel";
+import BuyOrSell from "./BuyOrSell";
+import Filters from "./Filters";
+import Spinner from "./Spinner";
 
-const Navigation = () => {
+const Content = () => {
+  const [items, setItems] = useState([]);
+  const [pageCount, setPageCount] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [buyOrSell, setBuyOrSell] = useState("buy");
+  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const apiDomain = 'https://eze-coding-backend.herokuapp.com/api/v1';
+  const [file, setFile] = useState();
+  const [errorMessage, setErrorMessage] = useState('');
+  const [searchText, setSearchText] = useState('');
+
+
+  useEffect(() => {
+    const fetchItems = async () => {
+      setLoading(true);
+      try {
+        let response = await fetch(
+          `${apiDomain}/phones/${buyOrSell}?p=${currentPage}`
+        );
+
+        response = await response.json();
+
+        if (buyOrSell === "buy") {
+          await setItems(response.data.buyRequest);
+        } else if (buyOrSell === "sell") {
+          await setItems(response.data.sellRequest);
+        }
+        await setPageCount(response.data.pageCount);
+        await setCurrentPage(response.data.page);
+        await setError(false);
+        setLoading(false);
+      } catch (error) {
+        await setError(true);
+        setLoading(false);
+
+        console.log(error);
+      }
+    };
+
+    fetchItems();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, buyOrSell]);
+
+  const toggleBuyOrSell = (value) => {
+    setBuyOrSell(value);
+  };
+
+  const Items = items.map((item) => <Item key={item._id} phone={item}></Item>);
+
+  const onFileChange = (e) => {
+      setFile(e.target.files);
+  }
+
+  const uploadFile = async (e) => {
+    if(!file || !file[0]){
+        throw 'please select a file and click "load"'
+    }
+    const uploadedFile = file[0]
+
+    setLoading(true);
+
+    const formData = new FormData()
+
+    formData.append('products', uploadedFile)
+
+    try {
+        let response = await fetch(`${apiDomain}/upload`, {
+            method: 'POST',
+            body: formData
+          })
+          response = await response.json();
+          if(!response) {
+              throw 'something went wrong. try again later';
+          }
+          await setError(false);
+          setLoading(false);
+          window.location.reload();
+    } catch (error) {
+        await setError(true);
+        setLoading(false);
+
+        setErrorMessage(error.message);
+        console.log(error.message.message);
+    }
+  }
+
+  const Search = async (e) => {
+    setLoading(true);
+        try {
+        let response = await fetch(
+            `${apiDomain}/${buyOrSell}/search?for=${searchText}`
+        );
+
+        response = await response.json();
+
+        if (buyOrSell === "buy") {
+            await setItems(response.data.buyRequest);
+        } else if (buyOrSell === "sell") {
+            await setItems(response.data.sellRequest);
+        }
+        // await setPageCount(response.data.pageCount);
+        // await setCurrentPage(response.data.page);
+        await setError(false);
+        setLoading(false);
+        } catch (error) {
+        await setError(true);
+        setLoading(false);
+
+        console.log(error);
+        }
+  }
   return (
     <div className="">
       <div className="container">
-
         <div className="row">
-
-            <div className="col-lg-3">
-                <div class="btn-group btn-group-lg col-md-12 my-4" role="group" aria-label="Basic example">
-                    <button type="button" class="btn btn-secondary">Buy</button>
-                    <button type="button" class="btn btn-secondary">Sell</button>
-                </div>
-                <div className="list-group">
-                    <a href="#" className="list-group-item">Filter 1</a>
-                    <a href="#" className="list-group-item">Filter 2</a>
-                    <a href="#" className="list-group-item">Filter 3</a>
-                </div>
-
+          <div className="col-lg-3">
+            <BuyOrSell
+              toggleBuyOrSell={toggleBuyOrSell}
+              buyOrSell={buyOrSell}
+            ></BuyOrSell>
+            <hr />
+            <div className="col-md-12">
+            <h4>Upload File</h4>
+            <input type='file' id='multi' onChange={onFileChange} />
             </div>
 
-            <div className="col-lg-9">
-                    <div id="carouselExampleIndicators" className="carousel slide my-4" data-ride="carousel">
-                        <ol className="carousel-indicators">
-                            <li data-target="#carouselExampleIndicators" data-slide-to="0" className="active"></li>
-                            <li data-target="#carouselExampleIndicators" data-slide-to="1"></li>
-                            <li data-target="#carouselExampleIndicators" data-slide-to="2"></li>
-                        </ol>
-                        <div className="carousel-inner" role="listbox">
-                            <div className="carousel-item active">
-                            <img className="d-block img-fluid" src="http://placehold.it/900x350" alt="First slide" />
-                            </div>
-                            <div className="carousel-item">
-                            <img className="d-block img-fluid" src="http://placehold.it/900x350" alt="Second slide" />
-                            </div>
-                            <div className="carousel-item">
-                            <img className="d-block img-fluid" src="http://placehold.it/900x350" alt="Third slide" />
-                            </div>
+            <div
+              className="btn-group btn-group-lg col-md-12 my-4"
+              role="group"
+              aria-label="Basic example"
+            >
+              <button
+                onClick={uploadFile}
+                type="button"
+                className="btn btn-primary"
+              >
+                Load Iphones
+              </button>
+            </div>
+            <hr />
+            <Filters></Filters>
+          </div>
+
+          <div className="col-lg-9">
+            <Carousel></Carousel>
+
+            {error ? (
+              <div class="alert alert-danger text-center" role="alert">
+                Something went wrong
+              </div>
+            ) : (
+              ""
+            )}
+            {errorMessage ? (
+              <div class="alert alert-danger text-center" role="alert">
+                {errorMessage}
+              </div>
+            ) : (
+              ""
+            )}
+
+            <div className="col-md-12">
+                <div className="col-md-6 offset-6">
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" placeholder="Search" onChange={e => setSearchText(e.target.value)} value={searchText}/>
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-primary" type="button" onClick={Search}>Search</button>
                         </div>
-                        <a className="carousel-control-prev" href="#carouselExampleIndicators" role="button" data-slide="prev">
-                            <span className="carousel-control-prev-icon" aria-hidden="true"></span>
-                            <span className="sr-only">Previous</span>
-                        </a>
-                        <a className="carousel-control-next" href="#carouselExampleIndicators" role="button" data-slide="next">
-                            <span className="carousel-control-next-icon" aria-hidden="true"></span>
-                            <span className="sr-only">Next</span>
-                        </a>
                     </div>
-
-                    <div className="row">
-                        <div className="col-lg-4 col-md-6 mb-4">
-                            <div className="card h-100">
-                                <a href="#"><img className="card-img-top" src="http://placehold.it/700x400" alt="" /></a>
-                                <div className="card-body">
-                                    <h4 className="card-title">
-                                    <a href="#">Item One</a>
-                                    </h4>
-                                    <h5>$24.99</h5>
-                                    <p className="card-text">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Amet numquam aspernatur!</p>
-                                </div>
-                                <div className="card-footer">
-                                    <small className="text-muted">&#9733; &#9733; &#9733; &#9733; &#9734;</small>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="col-lg-4 col-md-6 mb-4">
-                            <div className="card h-100">
-                            <a href="#"><img className="card-img-top" src="http://placehold.it/700x400" alt="" /></a>
-                            <div className="card-body">
-                                <h4 className="card-title">
-                                <a href="#">Item Two</a>
-                                </h4>
-                                <h5>$24.99</h5>
-                                <p className="card-text">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Amet numquam aspernatur! Lorem ipsum dolor sit amet.</p>
-                            </div>
-                            <div className="card-footer">
-                                <small className="text-muted">&#9733; &#9733; &#9733; &#9733; &#9734;</small>
-                            </div>
-                            </div>
-                        </div>
-
-                        <div className="col-lg-4 col-md-6 mb-4">
-                            <div className="card h-100">
-                            <a href="#"><img className="card-img-top" src="http://placehold.it/700x400" alt="" /></a>
-                            <div className="card-body">
-                                <h4 className="card-title">
-                                <a href="#">Item Three</a>
-                                </h4>
-                                <h5>$24.99</h5>
-                                <p className="card-text">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Amet numquam aspernatur!</p>
-                            </div>
-                            <div className="card-footer">
-                                <small className="text-muted">&#9733; &#9733; &#9733; &#9733; &#9734;</small>
-                            </div>
-                            </div>
-                        </div>
-
-                    </div>
-
                 </div>
             </div>
+            {loading ? <Spinner></Spinner> : <div className="row">{Items}</div>}
+
+            <div className="row">
+              <div className="ol-lg-4 col-md-6 mb-4">
+                <nav aria-label="Page navigation">
+                  <ul className="pagination">
+                    <li
+                      className={
+                        "page-item" + (currentPage === 1 ? " disabled" : "")
+                      }
+                    >
+                      <button
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage(currentPage - 1)}
+                        className="page-link"
+                        href="#"
+                      >
+                        Previous
+                      </button>
+                    </li>
+
+                    <li
+                      className={
+                        "page-item" +
+                        (currentPage === pageCount ? " disabled" : "")
+                      }
+                    >
+                      <button
+                        disabled={currentPage === pageCount}
+                        className="page-link"
+                        onClick={() => setCurrentPage(currentPage + 1)}
+                        href="#"
+                      >
+                        Next
+                      </button>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
     </div>
   );
-}
+};
 
-export default Navigation;
+export default Content;
