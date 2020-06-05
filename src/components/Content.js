@@ -12,13 +12,18 @@ const Content = () => {
   const [buyOrSell, setBuyOrSell] = useState("buy");
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const apiDomain = 'https://eze-coding-backend.herokuapp.com/api/v1';
+  const [file, setFile] = useState();
+  const [errorMessage, setErrorMessage] = useState('');
+  const [searchText, setSearchText] = useState('');
+
 
   useEffect(() => {
     const fetchItems = async () => {
       setLoading(true);
       try {
         let response = await fetch(
-          `https://eze-coding-backend.herokuapp.com/api/v1/phones/${buyOrSell}?p=${currentPage}`
+          `${apiDomain}/phones/${buyOrSell}?p=${currentPage}`
         );
 
         response = await response.json();
@@ -50,6 +55,68 @@ const Content = () => {
 
   const Items = items.map((item) => <Item key={item._id} phone={item}></Item>);
 
+  const onFileChange = (e) => {
+      setFile(e.target.files);
+  }
+
+  const uploadFile = async (e) => {
+    if(!file || !file[0]){
+        throw 'please select a file and click "load"'
+    }
+    const uploadedFile = file[0]
+
+    setLoading(true);
+
+    const formData = new FormData()
+
+    formData.append('products', uploadedFile)
+
+    try {
+        let response = await fetch(`${apiDomain}/upload`, {
+            method: 'POST',
+            body: formData
+          })
+          response = await response.json();
+          if(!response) {
+              throw 'something went wrong. try again later';
+          }
+          await setError(false);
+          setLoading(false);
+          window.location.reload();
+    } catch (error) {
+        await setError(true);
+        setLoading(false);
+
+        setErrorMessage(error.message);
+        console.log(error.message.message);
+    }
+  }
+
+  const Search = async (e) => {
+    setLoading(true);
+        try {
+        let response = await fetch(
+            `${apiDomain}/${buyOrSell}/search?for=${searchText}`
+        );
+
+        response = await response.json();
+
+        if (buyOrSell === "buy") {
+            await setItems(response.data.buyRequest);
+        } else if (buyOrSell === "sell") {
+            await setItems(response.data.sellRequest);
+        }
+        // await setPageCount(response.data.pageCount);
+        // await setCurrentPage(response.data.page);
+        await setError(false);
+        setLoading(false);
+        } catch (error) {
+        await setError(true);
+        setLoading(false);
+
+        console.log(error);
+        }
+  }
   return (
     <div className="">
       <div className="container">
@@ -59,19 +126,26 @@ const Content = () => {
               toggleBuyOrSell={toggleBuyOrSell}
               buyOrSell={buyOrSell}
             ></BuyOrSell>
+            <hr />
+            <div className="col-md-12">
+            <h4>Upload File</h4>
+            <input type='file' id='multi' onChange={onFileChange} />
+            </div>
+
             <div
               className="btn-group btn-group-lg col-md-12 my-4"
               role="group"
               aria-label="Basic example"
             >
               <button
-                // onClick={() => }
+                onClick={uploadFile}
                 type="button"
                 className="btn btn-primary"
               >
                 Load Iphones
               </button>
             </div>
+            <hr />
             <Filters></Filters>
           </div>
 
@@ -85,7 +159,24 @@ const Content = () => {
             ) : (
               ""
             )}
+            {errorMessage ? (
+              <div class="alert alert-danger text-center" role="alert">
+                {errorMessage}
+              </div>
+            ) : (
+              ""
+            )}
 
+            <div className="col-md-12">
+                <div className="col-md-6 offset-6">
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" placeholder="Search" onChange={e => setSearchText(e.target.value)} value={searchText}/>
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-primary" type="button" onClick={Search}>Search</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
             {loading ? <Spinner></Spinner> : <div className="row">{Items}</div>}
 
             <div className="row">
