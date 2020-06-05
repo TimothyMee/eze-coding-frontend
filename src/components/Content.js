@@ -167,8 +167,9 @@ const Content = () => {
               ""
             )}
 
-            <div className="col-md-12">
-                <div className="col-md-6 offset-6">
+            <div className="col-md-12 row">
+                <div className="col-md-6"></div>
+                <div className="col-md-6">
                     <div class="input-group mb-3">
                         <input type="text" class="form-control" placeholder="Search" onChange={e => setSearchText(e.target.value)} value={searchText}/>
                         <div class="input-group-append">
