@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import {NotificationManager} from 'react-notifications';
 import Item from "./Item";
 import Carousel from "./Carousel";
 import BuyOrSell from "./BuyOrSell";
@@ -26,6 +27,10 @@ const Content = () => {
           `${apiDomain}/phones/${buyOrSell}?p=${currentPage}`
         );
 
+        if(response.status !== 200){
+          response = await response.json();
+          throw response.message;
+        }
         response = await response.json();
 
         if (buyOrSell === "buy") {
@@ -38,9 +43,8 @@ const Content = () => {
         await setError(false);
         setLoading(false);
       } catch (error) {
-        await setError(true);
         setLoading(false);
-
+        NotificationManager.error(error)
         console.log(error);
       }
     };
@@ -61,7 +65,7 @@ const Content = () => {
 
   const uploadFile = async (e) => {
     if(!file || !file[0]){
-        throw 'please select a file and click "load"'
+      throw 'Please upload an excel file of the request and click the load button'
     }
     const uploadedFile = file[0]
 
@@ -76,6 +80,12 @@ const Content = () => {
             method: 'POST',
             body: formData
           })
+
+          if(response.status !== 200){
+            response = await response.json();
+            throw response.message;
+          }
+
           response = await response.json();
           if(!response) {
               throw 'something went wrong. try again later';
@@ -84,11 +94,11 @@ const Content = () => {
           setLoading(false);
           window.location.reload();
     } catch (error) {
-        await setError(true);
         setLoading(false);
+        console.log(error);
 
-        setErrorMessage(error.message);
-        console.log(error.message.message);
+        NotificationManager.error(error)
+
     }
   }
 
