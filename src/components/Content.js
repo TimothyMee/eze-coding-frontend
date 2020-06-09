@@ -121,10 +121,9 @@ const Content = () => {
         await setError(false);
         setLoading(false);
         } catch (error) {
-        await setError(true);
-        setLoading(false);
-
-        console.log(error);
+          setLoading(false);
+          console.log(error);
+          NotificationManager.error('an error occured, please check your search parameters and try again')
         }
   }
   return (
